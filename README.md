@@ -32,66 +32,46 @@ Script Code (mygrep.sh):
 
 #!/bin/bash
 
-# Check if at least two arguments are provided
-if [ $# -lt 2 ]; then
-  echo "Usage: $0 [-n] [-v] <search_string> <file>"
-  exit 1
+show_help() {
+    echo "Usage: $0 [-n] [-v] search_string filename"
+}
+
+if [[ "$1" == "--help" ]]; then
+    show_help
+    exit 0
 fi
 
-# Default options
-line_numbers=false
-invert_match=false
-
-# Parse options
-while getopts "nv" opt; do
-  case $opt in
-    n)
-      line_numbers=true
-      ;;
-    v)
-      invert_match=true
-      ;;
-    *)
-      echo "Invalid option. Usage: $0 [-n] [-v] <search_string> <file>"
-      exit 1
-      ;;
-  esac
+options=""
+while [[ "$1" == -* ]]; do
+    options="$options$1"
+    shift
 done
 
-# Remove options from argument list
-shift $((OPTIND - 1))
+if [ $# -lt 2 ]; then
+    echo "Error: Missing search string or filename"
+    show_help
+    exit 1
+fi
 
-# Get search string and file name
-search_string=$1
-file=$2
+search="$1"
+file="$2"
 
-# Check if file exists
 if [ ! -f "$file" ]; then
-  echo "File not found!"
-  exit 1
+    echo "Error: File not found!"
+    exit 1
 fi
 
-# Process the file
-if $invert_match; then
-  grep -i -v "$search_string" "$file" | 
-  if $line_numbers; then
-    nl
-  fi
-else
-  grep -i "$search_string" "$file" | 
-  if $line_numbers; then
-    nl
-  fi
+grep_command="grep -i"
+
+if [[ "$options" == *v* ]]; then
+    grep_command="$grep_command -v"
 fi
-Run Tests:
 
-./mygrep.sh hello testfile.txt
+if [[ "$options" == *n* ]]; then
+    grep_command="$grep_command -n"
+fi
 
-./mygrep.sh -n hello testfile.txt
-
-./mygrep.sh -vn hello testfile.txt
-
-./mygrep.sh -v testfile.txt
+$grep_command "$search" "$file"
 
 ================================================
 
